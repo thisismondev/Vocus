@@ -13,7 +13,7 @@ router.get('/regist', auth.register);
 
 // materi
 router.get('/', learning.getAllMateri);
-router.post('/materi/upload', authMiddleware, upload.single('file'), learning.uploadMateri)
+router.post('/materi/upload', authMiddleware, upload.single('url_materi'), learning.uploadMateri)
 
 
 module.exports = router;

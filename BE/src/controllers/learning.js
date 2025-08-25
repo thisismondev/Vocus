@@ -12,7 +12,7 @@ exports.getAllMateri = async (req, res) => {
 
 exports.uploadMateri = async (req, res) => {
   try {
-    const { idMateri, title, subject, paket } = req.body;
+    const { title, subject, paket } = req.body;
     const file = req.file;
     const userId = req.user.id; // Otomatis terisi dari middleware
 
@@ -27,40 +27,42 @@ exports.uploadMateri = async (req, res) => {
       return res.status(400).json({ error: 'File harus berupa PDF atau Word' });
     }
 
-    // Nama file unik
-    const path = `materi/${Date.now()}-${file.originalname}`;
+    // Generate idMateri otomatis: M + 4 digit angka acak
+    const idMateri = 'M' + Math.floor(1000 + Math.random() * 9000);
+
+    // Nama file unik berdasarkan paket dan subject
+    const path = `${paket}/${subject}/${Date.now()}-${file.originalname}`;
     console.log('Path upload:', path);
 
-    const { error: uploadError } = await db.storage.from('materi').upload(path, file.buffer, {
-      contentType: file.mimetype,
-    });
+    // Proses upload dan insert dibungkus try-catch, jika salah satu gagal, tidak ada data yang diinput
+    let urlMateri;
+    try {
+      const { error: uploadError } = await db.storage.from('Materi').upload(path, file.buffer, {
+        contentType: file.mimetype,
+      });
+      if (uploadError) throw new Error(uploadError.message);
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError.message);
-      return res.status(500).json({ error: uploadError.message });
+      // Ambil public URL
+      const { data: urlData } = db.storage.from('Materi').getPublicUrl(path);
+      urlMateri = urlData.publicUrl;
+
+      const { error: insertError } = await db.from('materi').insert([
+        {
+          idMateri: idMateri,
+          idUser: userId,
+          subjects: subject,
+          paket: paket,
+          title: title,
+          url_materi: urlMateri,
+        },
+      ]);
+      if (insertError) throw new Error(insertError.message);
+    } catch (err) {
+      console.error('Proses upload/insert gagal:', err.message);
+      return res.status(500).json({ error: 'Proses upload/insert gagal: ' + err.message });
     }
 
-    // Ambil public URL
-    const { data: urlMateri } = db.storage.from('materi').getPublicUrl(path);
-    console.log('Public URL:', urlMateri.publicUrl);
-
-    const { error: insertError } = await db.from('materi').insert([
-      {
-        idMateri: idMateri,
-        idUser: userId,
-        subjects: subject,
-        paket: paket,
-        title: title,
-        url_materi: urlMateri.publicUrl,
-      },
-    ]);
-
-    if (insertError) {
-      console.error('Insert error:', insertError.message);
-      throw insertError;
-    }
-
-    res.json({ message: 'Materi berhasil diupload', url: urlMateri.publicUrl });
+    res.json({ message: 'Materi berhasil diupload', url: urlMateri });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
