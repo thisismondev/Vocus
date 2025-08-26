@@ -11,10 +11,7 @@ exports.login = async (req, res) => {
 
     // Ambil data user dari database
     const uid = data.user.id;
-    const { data: userData, error: userError } = await db.from('users')
-    .select('idUser, name, role, paket')
-    .eq('idUser', uid)
-    .single();
+    const { data: userData, error: userError } = await db.from('users').select('idUser, name, role, paket').eq('idUser', uid).single();
     if (userError) return res.status(404).json({ error: 'User tidak ditemukan di database.' });
 
     res.status(200).json({
@@ -23,9 +20,7 @@ exports.login = async (req, res) => {
       role: userData.role,
       paket: userData.paket,
       token: data.session.access_token,
-      refresh_token: data.session.refresh_token,
     });
-
   } catch (err) {
     res.status(500).json({ error: 'Terjadi kesalahan pada server.' });
   }
