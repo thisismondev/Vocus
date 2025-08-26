@@ -9,7 +9,7 @@ const upload = require('../../middlewares/uploadMiddleware');
 // Auth
 router.post('/login', auth.login);
 router.post('/logout', auth.logout);
-router.post('/regist', auth.register);
+router.post('/regist', authMiddleware, auth.register);
 
 // materi
 router.get('/', learning.getAllMateri);

@@ -67,6 +67,9 @@ exports.register = async (req, res) => {
 
     const uid = authData.user.id;
 
+    // Ambil id pembuat akun dari req.user (jika ada, misal dari middleware auth)
+    const createdBy = req.user?.id || null;
+
     // Insert ke tabel user setelah Auth sukses
     const { data: userData, error: userError } = await db
       .from('users')
@@ -76,6 +79,7 @@ exports.register = async (req, res) => {
           name,
           role,
           paket: paketFinal,
+          created_by: createdBy,
         },
       ])
       .select();
