@@ -1,4 +1,4 @@
-const { db } = require('../../config/supabase.config');
+const { db } = require('../../../config/supabase.config');
 
 exports.editMateri = async (req, res) => {
   try {
